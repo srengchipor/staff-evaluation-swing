@@ -10,9 +10,6 @@ import java.sql.SQLException;
 
 public class CompanyRegistrationForm {
 
-    public static AdminService adminService = new AdminServiceImpl();
-
-
     private JFrame frame;
     private JTextField nameField;
     private JTextField addressField;
@@ -185,7 +182,6 @@ public class CompanyRegistrationForm {
             try {
 
                 AdminService adminService = new AdminServiceImpl();
-
 
                 JOptionPane.showMessageDialog(frame,
                         // Call the registerCompany method

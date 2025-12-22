@@ -4,50 +4,109 @@ import dbconfig.DbConnection;
 import dto.*;
 import service.AdminService;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class AdminServiceImpl implements AdminService {
 
     @Override
-    public String registerCompany(String name, String address, String phone, String email, String adminUser, String adminPassword) throws SQLException {
+    public String registerCompany(
+            String name,
+            String address,
+            String phone,
+            String email,
+            String adminUser,
+            String adminPassword
+    ) throws SQLException {
 
-        String sql = """
-                INSERT INTO companies (name, address, phone, email, admin_user, admin_password)\s
-                VALUES (?, ?, ?, ?, ?, ?);""";
+        String insertCompanySql = """
+        INSERT INTO companies (
+            name, address, phone, email, admin_user, admin_password
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """;
+
+        String insertAdminSql = """
+        INSERT INTO users (
+            company_id, username, password, description, user_group, status
+        )
+        VALUES (?, ?, ?, 'Company Administrator', 'ADMIN', 'YES')
+        """;
 
         try (Connection connection = DbConnection.getInstance()) {
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.setString(1, name);
-                ps.setString(2, address);
-                ps.setString(3, phone);
-                ps.setString(4, email);
-                ps.setString(5, adminUser);
-                ps.setString(6, adminPassword);
+            connection.setAutoCommit(false); // 🔥 START TRANSACTION
 
-                int rowsAffected = ps.executeUpdate();
+            try (
+                    PreparedStatement companyPs =
+                            connection.prepareStatement(insertCompanySql, Statement.RETURN_GENERATED_KEYS);
+            ) {
+                companyPs.setString(1, name);
+                companyPs.setString(2, address);
+                companyPs.setString(3, phone);
+                companyPs.setString(4, email);
+                companyPs.setString(5, adminUser);
+                companyPs.setString(6, adminPassword);
 
-                if (rowsAffected > 0) {
-//                    System.out.println("Company registered successfully");
-                    return "Company registered successfully!\n\nYou can now login with your admin credentials.";
+                companyPs.executeUpdate();
+
+                long companyId;
+                try (ResultSet rs = companyPs.getGeneratedKeys()) {
+                    if (!rs.next()) {
+                        throw new SQLException("Failed to retrieve company ID");
+                    }
+                    companyId = rs.getLong(1);
                 }
 
+                try (PreparedStatement adminPs =
+                             connection.prepareStatement(insertAdminSql)) {
+
+                    adminPs.setLong(1, companyId);
+                    adminPs.setString(2, adminUser);
+                    adminPs.setString(3, adminPassword); // hash before storing!
+
+                    adminPs.executeUpdate();
+                }
+
+                connection.commit(); // ✅ COMMIT
+                return "Company registered successfully!\n\nYou can now login with your admin credentials.";
+
+            } catch (SQLException e) {
+                connection.rollback(); // ❌ ROLLBACK
+                throw e;
             }
-
-
         }
-
-        throw new SQLException("Failed to register company");
     }
+
 
     @Override
     public String updateCompany(Long companyId, String name, String address, String phone, String email, String adminUser, String adminPassword) throws SQLException {
         return "";
+    }
+
+    @Override
+    public List<CompanyNameAndIdResponse> getAllCompanyName() throws SQLException {
+        String sql = "select id, name from companies";
+        List<CompanyNameAndIdResponse> responses = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        responses.add(
+                                new CompanyNameAndIdResponse(
+                                        rs.getLong("id"),
+                                        rs.getString("name")
+                                )
+                        );
+                    }
+                }
+            }
+        }
+
+        return responses;
     }
 
     @Override
@@ -216,7 +275,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public String createStaff(String name, String sex, Date dateOfBirth, String placeOfBirth, String currentAddress, String phone, String email, Long leaderId, Long departmentId, Long officeId, Long positionId, Long createdByUserId) throws SQLException {
+    public String createStaff(long companyId, String username, String password, String name, String sex, LocalDate dateOfBirth, String placeOfBirth, String currentAddress, String phone, String email, Long leaderId, long departmentId, long officeId, long positionId, long createdByUserId) throws SQLException {
         return "";
     }
 

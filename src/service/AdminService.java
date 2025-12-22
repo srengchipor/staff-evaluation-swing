@@ -3,6 +3,7 @@ package service;
 import dto.*;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public interface AdminService {
 
     String updateCompany(Long companyId, String name, String address, String phone,
                          String email, String adminUser, String adminPassword) throws SQLException;
+
+    List<CompanyNameAndIdResponse> getAllCompanyName() throws SQLException;
 
     CompanyResponse getCompanyById(Long companyId) throws SQLException;
 
@@ -108,10 +111,30 @@ public interface AdminService {
     // ============================================
     // Staff Management
     // ============================================
-    String createStaff(String name, String sex, Date dateOfBirth, String placeOfBirth,
-                       String currentAddress, String phone, String email, Long leaderId,
-                       Long departmentId, Long officeId, Long positionId,
-                       Long createdByUserId) throws SQLException;
+    String createStaff(
+            long companyId,
+
+            // login account
+            String username,
+            String password,
+
+            // staff profile
+            String name,
+            String sex,
+            LocalDate dateOfBirth,
+            String placeOfBirth,
+            String currentAddress,
+            String phone,
+            String email,
+
+            Long leaderId,
+            long departmentId,
+            long officeId,
+            long positionId,
+
+            long createdByUserId
+    )
+    throws SQLException;
 
     String updateStaff(Long staffId, String name, String sex, Date dateOfBirth,
                        String placeOfBirth, String currentAddress, String phone, String email,
