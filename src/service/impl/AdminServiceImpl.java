@@ -87,6 +87,38 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public List<CompanyResponse> getAllCompanies() throws SQLException {
+        String sql = "select * from companies";
+        List<CompanyResponse> responses = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        responses.add(
+                                new CompanyResponse(
+                                        rs.getLong("id"),
+                                        rs.getString("name"),
+                                        rs.getString("address"),
+                                        rs.getString("email"),
+                                        rs.getString("phone"),
+                                        rs.getString("admin_user"),
+                                        rs.getString("status")
+                                )
+                        );
+                    }
+
+                }
+
+
+            }
+        }
+
+        return responses;
+    }
+
+    @Override
     public List<CompanyNameAndIdResponse> getAllCompanyName() throws SQLException {
         String sql = "select id, name from companies";
         List<CompanyNameAndIdResponse> responses = new ArrayList<>();
@@ -140,8 +172,33 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<UserResponse> getAllUsers(Long companyId) throws SQLException {
-        return List.of();
+    public List<UserResponse> getAllUsers() throws SQLException {
+        String sql = "select u.id, u.username, c.name as company, u.description, u.status from users u left join companies c on u.company_id = c.id;";
+        List<UserResponse> users = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        users.add(
+                                new UserResponse(
+                                        rs.getLong("id"),
+                                        rs.getString("username"),
+                                        rs.getString("company"),
+                                        rs.getString("description"),
+                                        rs.getString("status")
+                                )
+                        );
+
+                    }
+
+                }
+
+            }
+        }
+
+        return users;
     }
 
     @Override
@@ -290,8 +347,44 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<StaffResponse> getAllStaff(Long userId) throws SQLException {
-        return List.of();
+    public List<StaffResponse> getAllStaff() throws SQLException {
+        String sql = """
+                SELECT
+                    s.id,
+                    s.name            AS staff_name,
+                    d.name            AS department_name,
+                    o.name            AS office_name,
+                    p.name            AS position_name,
+                    s.status
+                FROM staffs s
+                JOIN departments d   ON s.department_id = d.id
+                JOIN offices o ON s.office_id = o.id
+                JOIN positions p     ON s.position_id = p.id;
+                """;
+
+        List<StaffResponse> staffResponses = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        staffResponses.add(
+                                new StaffResponse(
+                                        rs.getLong("id"),
+                                        rs.getString("staff_name"),
+                                        rs.getString("department_name"),
+                                        rs.getString("office_name"),
+                                        rs.getString("position_name"),
+                                        rs.getString("status")
+                                )
+                        );
+                    }
+                }
+            }
+        }
+
+        return staffResponses;
     }
 
     @Override
@@ -442,6 +535,66 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Double getAverageScoreForStaff(Long staffId, Long periodId) throws SQLException {
         return 0.0;
+    }
+
+    @Override
+    public List<String> getDepartmentName() throws SQLException {
+        String sql = "select name from departments;";
+        List<String> data = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            data.add(rs.getString("name"));
+                        }
+                }
+
+            }
+        }
+
+
+        return data;
+    }
+
+    @Override
+    public List<String> getOfficeName() throws SQLException {
+        String sql = "select name from offices;";
+        List<String> data = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        data.add(rs.getString("name"));
+                    }
+                }
+
+            }
+        }
+
+
+        return data;
+    }
+
+    @Override
+    public List<String> getPositionName() throws SQLException {
+        String sql = "select name from positions;";
+        List<String> data = new ArrayList<>();
+
+        try (Connection connection = DbConnection.getInstance()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        data.add(rs.getString("name"));
+                    }
+                }
+
+            }
+        }
+
+
+        return data;
     }
 
 

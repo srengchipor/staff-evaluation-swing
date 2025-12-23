@@ -1,19 +1,29 @@
 package view;
 
+import dto.CompanyResponse;
+import dto.UserResponse;
+import service.AdminService;
+import service.impl.AdminServiceImpl;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Super Admin Dashboard - Manages all companies and system-wide settings
  */
 public class AdminDashboard extends JFrame {
 
+    private final AdminService adminService = new AdminServiceImpl();
+
     private JPanel contentPanel;
     private CardLayout cardLayout;
 
-    public AdminDashboard() {
+    public AdminDashboard() throws SQLException {
         setTitle("Staff Evaluation System - Super Admin Dashboard");
         setSize(1200, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -77,7 +87,15 @@ public class AdminDashboard extends JFrame {
         logoutBtn.setForeground(Color.WHITE);
         logoutBtn.setFocusPainted(false);
         logoutBtn.setBorderPainted(false);
-        logoutBtn.addActionListener(e -> System.exit(0));
+        logoutBtn.addActionListener(e -> {
+            // close current window
+            JFrame currentFrame =
+                    (JFrame) SwingUtilities.getWindowAncestor(logoutBtn);
+            currentFrame.dispose();
+
+            // open login form
+            LoginForm.getLoginForm();
+        });
         sidebar.add(logoutBtn);
 
         return sidebar;
@@ -132,7 +150,7 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    private JPanel createCompanyManagementPanel() {
+    private JPanel createCompanyManagementPanel() throws SQLException {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(241, 245, 249));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -153,19 +171,29 @@ public class AdminDashboard extends JFrame {
 
         panel.add(headerPanel, BorderLayout.NORTH);
 
-        String[] columns = {"ID", "Company Name", "Email", "Phone", "Admin User", "Status", "Actions"};
-        Object[][] data = {
-                {1, "Agent 404", "agent404@gmail.com", "099876543", "admin", "Active", "Actions"},
-                {2, "Tech Solutions Ltd", "info@techsol.com", "023456789", "techAdmin", "Active", "Actions"},
-                {3, "Global Trading Co", "contact@global.com", "012345678", "globalAdmin", "Inactive", "Actions"}
-        };
+        String[] columns = {"ID", "Company Name", "Address", "Email", "Phone", "Admin User", "Status", "Actions"};
 
-        DefaultTableModel model = new DefaultTableModel(data, columns) {
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 6;
             }
         };
+
+        List<CompanyResponse> data = adminService.getAllCompanies();
+
+        for (CompanyResponse response : data) {
+            model.addRow(new Object[] {
+                    response.id(),
+                    response.name(),
+                    response.address(),
+                    response.email(),
+                    response.phone(),
+                    response.userAdmin(),
+                    response.status(),
+                    "Actions"
+            });
+        }
 
         JTable table = new JTable(model);
         table.setRowHeight(40);
@@ -178,7 +206,8 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    private JPanel createSystemUsersPanel() {
+    private JPanel createSystemUsersPanel() throws SQLException {
+
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(241, 245, 249));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -188,14 +217,31 @@ public class AdminDashboard extends JFrame {
         panel.add(headerLabel, BorderLayout.NORTH);
 
         String[] columns = {"ID", "Username", "Company", "Role", "Status"};
-        Object[][] data = {
-                {1, "admin", "System", "Super Admin", "Active"},
-                {2, "agent404Admin", "Agent 404", "Company Admin", "Active"},
-                {3, "techAdmin", "Tech Solutions", "Company Admin", "Active"}
+
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // read-only table
+            }
         };
 
-        JTable table = new JTable(data, columns);
+        List<UserResponse> users = adminService.getAllUsers();
+
+        for (UserResponse u : users) {
+            model.addRow(new Object[]{
+                    u.id(),
+                    u.username(),
+                    u.company(),
+                    u.description(),
+                    u.status()
+            });
+        }
+
+        JTable table = new JTable(model);
         table.setRowHeight(40);
+        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+
         JScrollPane scrollPane = new JScrollPane(table);
         panel.add(scrollPane, BorderLayout.CENTER);
 

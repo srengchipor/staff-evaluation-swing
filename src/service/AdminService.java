@@ -22,6 +22,8 @@ public interface AdminService {
     String updateCompany(Long companyId, String name, String address, String phone,
                          String email, String adminUser, String adminPassword) throws SQLException;
 
+    List<CompanyResponse> getAllCompanies() throws SQLException;
+
     List<CompanyNameAndIdResponse> getAllCompanyName() throws SQLException;
 
     CompanyResponse getCompanyById(Long companyId) throws SQLException;
@@ -41,7 +43,7 @@ public interface AdminService {
 
     UserResponse getUserById(Long userId) throws SQLException;
 
-    List<UserResponse> getAllUsers(Long companyId) throws SQLException;
+    List<UserResponse> getAllUsers() throws SQLException;
 
     List<UserResponse> getUsersByGroup(Long companyId, String userGroup) throws SQLException;
 
@@ -143,7 +145,7 @@ public interface AdminService {
 
     StaffResponse getStaffById(Long staffId) throws SQLException;
 
-    List<StaffResponse> getAllStaff(Long userId) throws SQLException;
+    List<StaffResponse> getAllStaff() throws SQLException;
 
     List<StaffResponse> getStaffByDepartment(Long departmentId) throws SQLException;
 
@@ -226,4 +228,11 @@ public interface AdminService {
     List<AseAssignScoreResponse> getAllScoresForStaff(Long staffId, Long periodId) throws SQLException;
 
     Double getAverageScoreForStaff(Long staffId, Long periodId) throws SQLException;
+
+
+
+    List<String> getDepartmentName() throws SQLException;
+    List<String> getOfficeName() throws SQLException;
+    List<String> getPositionName() throws SQLException;
+
 }

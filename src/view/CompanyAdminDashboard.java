@@ -1,20 +1,28 @@
 package view;
 
+import dto.StaffResponse;
+import service.AdminService;
+import service.impl.AdminServiceImpl;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Company Admin Dashboard - Manages company-specific staff, evaluations, and reports
  */
 public class CompanyAdminDashboard extends JFrame {
 
+    private final AdminService adminService = new AdminServiceImpl();
+
     private JPanel contentPanel;
     private CardLayout cardLayout;
     private String companyName = "Agent 404"; // This should be passed from login
 
-    public CompanyAdminDashboard() {
+    public CompanyAdminDashboard() throws SQLException {
         setTitle("Staff Evaluation System - Company Admin Dashboard");
         setSize(1200, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -30,7 +38,7 @@ public class CompanyAdminDashboard extends JFrame {
 
         contentPanel.add(createDashboardPanel(), "dashboard");
         contentPanel.add(createStaffManagementPanel(), "staff");
-        contentPanel.add(createOrganizationPanel(), "organization");
+        contentPanel.add(createOfficePanel(), "office");
         contentPanel.add(createPeriodsPanel(), "periods");
         contentPanel.add(createAssignmentsPanel(), "assignments");
         contentPanel.add(createReportsPanel(), "reports");
@@ -65,7 +73,7 @@ public class CompanyAdminDashboard extends JFrame {
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(createMenuButton("👥 Staff", "staff"));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(createMenuButton("🏢 Organization", "organization"));
+        sidebar.add(createMenuButton("🏢 Office", "office"));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(createMenuButton("📅 Periods", "periods"));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -82,7 +90,15 @@ public class CompanyAdminDashboard extends JFrame {
         logoutBtn.setForeground(Color.WHITE);
         logoutBtn.setFocusPainted(false);
         logoutBtn.setBorderPainted(false);
-        logoutBtn.addActionListener(e -> System.exit(0));
+        logoutBtn.addActionListener(e -> {
+            // close current window
+            JFrame currentFrame =
+                    (JFrame) SwingUtilities.getWindowAncestor(logoutBtn);
+            currentFrame.dispose();
+
+            // open login form
+            LoginForm.getLoginForm();
+        });
         sidebar.add(logoutBtn);
 
         return sidebar;
@@ -138,7 +154,7 @@ public class CompanyAdminDashboard extends JFrame {
         return panel;
     }
 
-    private JPanel createStaffManagementPanel() {
+    private JPanel createStaffManagementPanel() throws SQLException {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(241, 245, 249));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -159,21 +175,26 @@ public class CompanyAdminDashboard extends JFrame {
 
         panel.add(headerPanel, BorderLayout.NORTH);
 
-        String[] columns = {"ID", "Name", "Department", "Office", "Position", "Actions"};
-        Object[][] data = {
-                {1, "Sok Dara", "IT Department", "Head Office", "Developer", "Actions"},
-                {2, "Chan Sophea", "HR Department", "Head Office", "HR Manager", "Actions"},
-                {3, "Lim Pisey", "Sales Department", "Branch 1", "Sales Lead", "Actions"},
-                {4, "Rath Vanna", "IT Department", "Head Office", "Team Leader", "Actions"},
-                {5, "Mao Sreypov", "Sales Department", "Branch 2", "Sales Rep", "Actions"}
-        };
+        String[] columns = {"ID", "Name", "Department", "Office", "Position", "Status"};
+        List<StaffResponse> staffResponses = adminService.getAllStaff();
 
-        DefaultTableModel model = new DefaultTableModel(data, columns) {
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 5;
             }
         };
+
+        for (StaffResponse staff : staffResponses) {
+            model.addRow(new Object[]{
+                    staff.id(),
+                    staff.name(),
+                    staff.departmentName(),
+                    staff.officeName(),
+                    staff.positionName(),
+                    staff.status()
+            });
+        }
 
         JTable table = new JTable(model);
         table.setRowHeight(40);
@@ -188,7 +209,7 @@ public class CompanyAdminDashboard extends JFrame {
         return panel;
     }
 
-    private JPanel createOrganizationPanel() {
+    private JPanel createOfficePanel() throws SQLException {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(241, 245, 249));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -202,60 +223,40 @@ public class CompanyAdminDashboard extends JFrame {
 
         // Departments
         mainPanel.add(createOrgSection("Departments",
-                new String[]{"IT Department", "HR Department", "Sales Department", "Finance", "Marketing"}));
+                adminService.getDepartmentName()));
 
         // Offices
         mainPanel.add(createOrgSection("Offices",
-                new String[]{"Head Office", "Branch Office 1", "Branch Office 2"}));
+                adminService.getOfficeName()));
 
         // Positions
         mainPanel.add(createOrgSection("Positions",
-                new String[]{"Manager", "Team Leader", "Senior Staff", "Staff", "Intern"}));
+                adminService.getPositionName()));
 
         panel.add(mainPanel, BorderLayout.CENTER);
 
         return panel;
     }
 
-    private JPanel createOrgSection(String title, String[] items) {
-        JPanel section = new JPanel(new BorderLayout());
-        section.setBackground(Color.WHITE);
-        section.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
+    private JPanel createOrgSection(String title, List<String> items) {
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(248, 250, 252));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JPanel section = new JPanel(new BorderLayout(10, 10));
+        section.setBackground(Color.WHITE);
+        section.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
 
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        section.add(titleLabel, BorderLayout.NORTH);
 
-        JButton addBtn = new JButton("➕");
-        addBtn.setBackground(new Color(59, 130, 246));
-        addBtn.setForeground(Color.WHITE);
-        addBtn.setFocusPainted(false);
-        addBtn.setPreferredSize(new Dimension(40, 30));
-        addBtn.addActionListener(e -> {
-            String newItem = JOptionPane.showInputDialog(this, "Enter new " + title.toLowerCase() + " name:");
-            if (newItem != null && !newItem.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, newItem + " added successfully!");
-            }
-        });
-        headerPanel.add(addBtn, BorderLayout.EAST);
-
-        section.add(headerPanel, BorderLayout.NORTH);
-
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        for (String item : items) {
-            listModel.addElement(item);
-        }
-
-        JList<String> list = new JList<>(listModel);
-        list.setFont(new Font("Arial", Font.PLAIN, 13));
-        list.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        // Convert List<String> -> JList
+        JList<String> list = new JList<>(items.toArray(new String[0]));
+        list.setFont(new Font("Arial", Font.PLAIN, 14));
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setBorder(null);
         section.add(scrollPane, BorderLayout.CENTER);
 
         return section;

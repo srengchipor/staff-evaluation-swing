@@ -8,11 +8,13 @@ public record CompanyResponse(
 
         String address,
 
-        String phone,
-
         String email,
 
-        String userAdmin
+        String phone,
+
+        String userAdmin,
+
+        String status
 
 
 ) {

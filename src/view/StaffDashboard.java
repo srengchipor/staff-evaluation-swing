@@ -95,12 +95,21 @@ public class StaffDashboard extends JFrame {
         logoutBtn.setForeground(Color.WHITE);
         logoutBtn.setFocusPainted(false);
         logoutBtn.setBorderPainted(false);
-        logoutBtn.addActionListener(e -> System.exit(0));
+        logoutBtn.addActionListener(e -> {
+            // close current window
+            JFrame currentFrame =
+                    (JFrame) SwingUtilities.getWindowAncestor(logoutBtn);
+            currentFrame.dispose();
+
+            // open login form
+            LoginForm.getLoginForm();
+        });
+
         sidebar.add(logoutBtn);
+
 
         return sidebar;
     }
-
 
     private JButton createMenuButton(String text, String panelName) {
         JButton button = new JButton(text);
@@ -580,10 +589,10 @@ public class StaffDashboard extends JFrame {
         return panel;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            StaffDashboard dashboard = new StaffDashboard();
-            dashboard.setVisible(true);
-        });
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> {
+//            StaffDashboard dashboard = new StaffDashboard();
+//            dashboard.setVisible(true);
+//        });
+//    }
 }
