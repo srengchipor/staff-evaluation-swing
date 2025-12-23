@@ -84,12 +84,36 @@ public class LoginForm {
                 String password = new String(passField.getPassword());
 
                 try {
+                    String result = authService.login(username, password);
                     if (username.isEmpty() || password.isEmpty()) {
                         messageLabel.setText("Please fill in all fields");
-                    } else if (authService.login(username, password)) {
+                    } else if (result.equals("SUPER_ADMIN")) {
                         messageLabel.setForeground(Color.GREEN);
                         messageLabel.setText("Login successful!");
                         PopMessage.showSuccess(frame, username);
+
+                        frame.dispose();
+                        AdminDashboard dashboard = new AdminDashboard();
+                        dashboard.setVisible(true);
+
+                    } else if (result.equals("ADMIN")) {
+                        messageLabel.setForeground(Color.GREEN);
+                        messageLabel.setText("Login successful!");
+                        PopMessage.showSuccess(frame, username);
+
+                        frame.dispose();
+                        CompanyAdminDashboard dashboard = new CompanyAdminDashboard();
+                        dashboard.setVisible(true);
+
+                    } else if (result.equals("STAFF")) {
+                        messageLabel.setForeground(Color.GREEN);
+                        messageLabel.setText("Login successful!");
+                        PopMessage.showSuccess(frame, username);
+
+                        frame.dispose();
+                        StaffDashboard dashboard = new StaffDashboard();
+                        dashboard.setVisible(true);
+
                     } else {
                         messageLabel.setForeground(Color.RED);
                         messageLabel.setText("Invalid username or password");

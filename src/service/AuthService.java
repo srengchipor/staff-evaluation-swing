@@ -4,6 +4,6 @@ import java.sql.SQLException;
 
 public interface AuthService {
 
-    boolean login(String username, String password) throws SQLException;
+    String login(String username, String password) throws SQLException;
 
 }
